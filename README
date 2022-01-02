@@ -12,3 +12,10 @@ this will run the server on 8081 by default, to change this export PORT variable
 To run the unit tests and integration tests, run:
 
 make test
+
+
+Link:    https://getir-imaskm.herokuapp.com
+endpoints:   
+POST /records
+GET   /in-memory?key=value
+POST /in-memory
