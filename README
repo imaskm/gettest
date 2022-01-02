@@ -1,0 +1,14 @@
+Getir rest API
+
+To run the server:
+
+export MONGO_URI
+
+and then run following command from project root directory:
+make run 
+
+this will run the server on 8081 by default, to change this export PORT variable
+
+To run the unit tests and integration tests, run:
+
+make test
