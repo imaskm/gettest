@@ -27,6 +27,7 @@ func NewController(db *database.MongoDB) *Controller {
 
 func (ctrl *Controller) SaveKeyValue(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 
 	data := new(types.Data)
 
@@ -102,12 +103,12 @@ func (ctrl *Controller) Records(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 
 	requestBody := new(types.RecordRequest)
 
 	err := decoder.Decode(requestBody)
 	if err != nil {
-		log.Println("here")
 		log.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(fmt.Sprintf("{ \"code\": %d, \"msg\": %s, \"records\": [] }", constants.ClientErrorCode, constants.Failure)))
