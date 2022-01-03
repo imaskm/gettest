@@ -25,7 +25,7 @@ func TestInMemoryPostValidBody(t *testing.T) {
 	endpoint := "/in-memory"
 
 	var jsonStrValidBody = []byte(`{
-		"key": "name",
+		"key": "wierdKey",
 		"value": "Ashwani"
 	}`)
 	resp, err := http.Post(Server+endpoint, "application/json", bytes.NewBuffer(jsonStrValidBody))
@@ -33,8 +33,21 @@ func TestInMemoryPostValidBody(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusCreated {
 		t.Error("in-memory Post failed  on valid body")
+	}
+
+	jsonStrValidBody = []byte(`{
+		"key": "wierdKey",
+		"value": "Ashwani12"
+	}`)
+	resp, err = http.Post(Server+endpoint, "application/json", bytes.NewBuffer(jsonStrValidBody))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if resp.StatusCode != http.StatusConflict {
+		t.Error("in-memory Post failed  on valid existing key")
 	}
 }
 

@@ -25,6 +25,16 @@ func NewController(db *database.MongoDB) *Controller {
 	return ctr
 }
 
+// SaveKeyValue returns success or failure
+// @Param Body {types.Data}
+// @Security None
+// @Accept  json
+// @Produce  json
+// @router /in-memory [POST]
+// @Success 201 "{types.Data}"
+// @failure 400 "{error: error string}"
+// @failure 409 "{error: error string}"
+// @failure 500 "{error: error string}"
 func (ctrl *Controller) SaveKeyValue(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -34,28 +44,53 @@ func (ctrl *Controller) SaveKeyValue(rw http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(data)
 	if err != nil || data.Key == "" || data.Value == "" {
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf("{\"msg\": %s }", constants.Failure)))
+		rw.Write([]byte(fmt.Sprintf("{\"error\": %s }", "invalid input")))
+		return
+	}
+
+	value, _ := inmem.Get(data.Key)
+	if value != nil {
+		rw.WriteHeader(http.StatusConflict)
+		rw.Write([]byte(fmt.Sprintf("{\"error\": %s }", "key already exists")))
 		return
 	}
 
 	inmem.Set(data)
-	rw.WriteHeader(http.StatusNoContent)
-	rw.Write([]byte(fmt.Sprintf("{\"msg\": %s }", constants.Success)))
+
+	result, err := json.Marshal(data)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		rw.Write([]byte(fmt.Sprintf("{\"error\": %s }", "server error")))
+		return
+	}
+	rw.WriteHeader(http.StatusCreated)
+	rw.Write([]byte(fmt.Sprintf("%v", string(result))))
+
 }
 
+// GetKeyValue returns Key-Value based on key parameter
+// @QueryParam key
+// @Security None
+// @Accept  json
+// @Produce  json
+// @router /in-memory?key=value [GET]
+// @Success 200 "{types.Data}"
+// @failure 400 "{error: error string}"
+// @failure 404 "{error: error string}"
+// @failure 500 "{error: error string}"
 func (ctrl *Controller) GetKeyValue(rw http.ResponseWriter, r *http.Request) {
 
 	keys := r.URL.Query()["key"]
 
 	if len(keys) != 1 {
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf("{\"msg\": %s }", constants.Failure)))
+		rw.Write([]byte(fmt.Sprintf("{\"error\": %s }", "bad request")))
 		return
 	}
 	key := keys[0]
 	if key == "" {
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf("{\"msg\": %s }", constants.Failure)))
+		rw.Write([]byte(fmt.Sprintf("{\"error\": %s }", "invalid input")))
 		return
 	}
 
@@ -92,6 +127,17 @@ func (ctrl *Controller) InMemory(rw http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+// Records fetches records based on filters
+// @Param body	body	types.RecordRequest
+// @Security None
+// @Accept  json
+// @Produce  json
+// @router /records/ [POST]
+// @Success 200 "{code:0, msg:success, records: []types.Record}"
+// @failure 400 "{code:1, msg:failure, records: []}"
+// @failure 404 "{code:1, msg:failure, records: []}"
+// @failure 500 "{code:2, msg:failure, records: []}"
 
 func (ctrl *Controller) Records(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
